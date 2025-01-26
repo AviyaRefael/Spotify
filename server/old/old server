@@ -1,0 +1,136 @@
+import base64
+import socket
+import threading
+import json
+import os
+from mysql.connector import Error
+
+
+# Configuration
+from db_functions import add_user, connect_to_server
+
+SERVER_HOST = '127.0.0.1'
+SERVER_PORT = 12345
+FILES_DIR = "files"  # Directory to save uploaded files
+END_MARKER = "END_OF_MSG"
+# Ensure the directory for uploaded files exists
+os.makedirs(FILES_DIR, exist_ok=True)
+
+connection = None
+
+# Helper Functions
+def register_user(mail, name, password):
+    """Register a new user."""
+    # if mail in users:
+    #     return {"status": "error", "message": "User already exists."}
+    # # users[mail] = {"name": name, "password": password}
+
+    add_user(connection, name, password, mail)
+    print({"User registered successfully."})
+    return {"status": "success", "message": "User registered successfully."}
+
+def login_user(mail, password):
+    # """Authenticate user."""
+    # if mail not in users or users[mail]['password'] != password:
+    #     return {"status": "error", "message": "Invalid credentials."}
+    print({"User logs successfully."})
+    return {"status": "success", "message": "Login successful."}
+
+def save_file(file_name, file_data):
+    """Save uploaded file."""
+    file_path = os.path.join(FILES_DIR, file_name)
+    with open(file_path, "wb") as f:
+        f.write(file_data)
+    return {"status": "success", "message": f"File '{file_name}' uploaded successfully."}
+
+def get_file(file_name):
+    """Retrieve a file."""
+    file_path = os.path.join(FILES_DIR, file_name)
+    if os.path.exists(file_path):
+        with open(file_path, "rb") as f:
+            return {"status": "success", "file_name": file_name, "file_data": f.read()}
+    return {"status": "error", "message": "File not found."}
+
+# Client Handler
+def handle_client(client_socket, address):
+    print(f"New connection from {address}")
+    try:
+        while True:  # Outer loop to handle multiple requests from the same client
+            data = b""
+            while True:  # Inner loop to receive a complete message
+                packet = client_socket.recv(1024)
+                if not packet:
+                    print(f"Client {address} disconnected.")
+                    return  # Exit the function if the client disconnects
+                data += packet
+                if b"END_OF_MSG" in data:  # Check for end-of-message marker
+                    break
+
+            # Remove the marker
+            data = data.replace(b"END_OF_MSG", b"")
+
+            try:
+                # Parse the JSON request
+                request = json.loads(data.decode('utf-8'))
+                response = {}
+
+                # Handle different request types
+                if request['type'] == 'register':
+                    response = register_user(request['mail'], request['name'], request['password'])
+                elif request['type'] == 'login':
+                    response = login_user(request['mail'], request['password'])
+                elif request['type'] == 'upload':
+                    file_name = request['file_name']
+                    file_data = base64.b64decode(request['file_data'])  # Decode from Base64
+                    response = save_file(file_name, file_data)
+                elif request['type'] == 'get_song':
+                    response = get_file(request['file_name'])
+
+                # Send the response with the end marker
+                client_socket.sendall((json.dumps(response) + "END_OF_MSG").encode('utf-8'))
+
+            except Exception as e:
+                print(f"Error processing request from {address}: {e}")
+                error_response = {"status": "error", "message": str(e)}
+                client_socket.sendall((json.dumps(error_response) + "END_OF_MSG").encode('utf-8'))
+
+    except Exception as e:
+        print(f"Error handling client {address}: {e}")
+    finally:
+        print(f"Closing connection with {address}")
+        client_socket.close()
+
+# Server Function
+def start_server():
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.bind((SERVER_HOST, SERVER_PORT))
+    server_socket.listen(5)
+    print(f"Server listening on {SERVER_HOST}:{SERVER_PORT}")
+
+    host = "localhost"
+    user = "root"
+    password = "root"
+    database = "music"
+
+    global connection
+    # 1. Connect to the MySQL server and create database if not exists
+    connection = connect_to_server(host, user, password)
+    if connection:
+        try:
+            cursor = connection.cursor()
+            cursor.execute(f"CREATE DATABASE IF NOT EXISTS {database}")
+            print(f"Database '{database}' is ready")
+            connection.database = database
+        except Error as e:
+            print(f"Error while creating database: {e}")
+            connection.close()
+            exit()
+
+    while True:
+        client_socket, address = server_socket.accept()
+        client_thread = threading.Thread(target=handle_client, args=(client_socket, address))
+        client_thread.start()
+
+# Run the Server
+if __name__ == "__main__":
+    start_server()
