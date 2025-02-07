@@ -3,11 +3,10 @@ from PyQt5.QtWidgets import (
     QPushButton, QWidget, QFileDialog
 )
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
-from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtCore import QUrl
 
-from widgets.playlist_items_table import PlaylistItemsTable
-from widgets.playlists_list import PlaylistsList
+from client.widgets.playlist_items_table import PlaylistItemsTable
+from client.widgets.playlists_list import PlaylistsList
 
 
 class MusicPlayer(QMainWindow):

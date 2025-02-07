@@ -6,7 +6,7 @@ import os
 from mysql.connector import Error
 
 # Configuration
-from db_functions import add_user, connect_to_server
+from db_functions import add_user, connect_to_server, get_playlist
 
 SERVER_HOST = '127.0.0.1'
 SERVER_PORT = 12345
@@ -39,7 +39,9 @@ def login_user(mail, password):
     try:
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM users WHERE mail=%s AND password=%s", (mail, password))
-        if cursor.fetchone():
+        resp = cursor.fetchone()
+        print(resp)
+        if resp:
             return {"status": "success", "message": "Login successful."}
         else:
             return {"status": "error", "message": "Invalid credentials."}
@@ -101,7 +103,9 @@ def handle_client(client_socket, address):
                 elif request['type'] == 'get_song':
                     response = get_file(request['file_name'])
                 elif request['type'] == 'playlists':
-                    response = {"status": "success", "message": {132:"playlist1222",36:"playlist244",952:"playlist4443"}}
+                    response = get_playlist(connection,request["mail"])
+                elif request['type'] == 'get_playlist_songs_id':
+                    response = get_playlist_songs_id(connection,request['playlist_id'])
 
                 client_socket.sendall((json.dumps(response) + "END_OF_MSG").encode('utf-8'))
 

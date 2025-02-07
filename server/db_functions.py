@@ -69,6 +69,38 @@ def check_user_exists(connection, username, password):
         print(f"Error: {e}")
         return False
 
+
+def get_playlist(connection,email):
+    try:
+        # ה-cursor מתפקד כ"מתווך" בין קוד ה-Python לבין מסד הנתונים
+        cursor = connection.cursor()
+        query = f"SELECT * FROM playlists WHERE user_mail='{email}'"
+        cursor.execute(query)
+        resp = cursor.fetchall()
+        print(resp)
+        playlists={}
+        for row in resp:
+            playlists[row[0]] = row[1]
+        return {"status": "success","message": playlists}
+    except Error as e:
+        print(f"Error: {e}")
+
+def get_playlist_songs_id(connection,playlist_id):
+    try:
+        # ה-cursor מתפקד כ"מתווך" בין קוד ה-Python לבין מסד הנתונים
+        cursor = connection.cursor()
+        query = f"""SELECT songs.id, songs.name
+                FROM songs
+                INNER JOIN playlist_songs ON playlist_songs.song_id = songs.id WHERE playlist_id={playlist_id};"""
+        cursor.execute(query)
+        playlist_songs = cursor.fetchall()
+        print(playlist_songs)
+        return {"status": "success", "message": playlist_songs}
+    except Error as e:
+        print(f"Error: {e}")
+
+
+
 # Main Function to Test
 if __name__ == "__main__":
     # Update these with your MySQL server credentials

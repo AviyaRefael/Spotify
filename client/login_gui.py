@@ -9,6 +9,7 @@ from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt
 import sys
 
+from register_gui import RegistrationWindow
 from main_gui import MusicPlayer
 
 
@@ -39,7 +40,7 @@ class SpotifyLogin(QWidget):
         self.username_input = QLineEdit()  # Define as instance variable
         self.username_input.setPlaceholderText("Email address")
         self.username_input.setFixedHeight(40)
-        self.username_input.setText("j@j.com")
+        self.username_input.setText("aviya@gmail.com")
 
 
         # Password input
@@ -47,7 +48,7 @@ class SpotifyLogin(QWidget):
         self.password_input.setPlaceholderText("Password")
         self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
         self.password_input.setFixedHeight(40)
-        self.password_input.setText("123456")
+        self.password_input.setText("securepassword")
 
         # Login button
         login_button = QPushButton("LOG IN")
@@ -122,8 +123,8 @@ class SpotifyLogin(QWidget):
 
         if response_json['status'] == 'success':
             print(response_json['message'])
-            # window_new = MusicPlayer("mail", "John")
-            # window_new.show()
+            window_new = MusicPlayer(mail, "John")
+            window_new.show()
 
 
         elif response_json['status'] == 'error':

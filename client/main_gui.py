@@ -1,12 +1,12 @@
 import socket
 
-from PyQt5.QtWidgets import (
+from PyQt5.QtMultimedia import QMediaContent
+from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QHBoxLayout,
     QPushButton, QWidget, QFileDialog
 )
-from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
-from PyQt5.QtMultimediaWidgets import QVideoWidget
-from PyQt5.QtCore import QUrl
+from PyQt6.QtMultimedia import QMediaPlayer
+from PyQt6.QtCore import QUrl
 
 from widgets.playlist_items_table import PlaylistItemsTable
 from widgets.playlists_list import PlaylistsList
@@ -47,12 +47,14 @@ class MusicPlayer(QMainWindow):
         self.stop_button = QPushButton("Stop")
         self.next_button = QPushButton("Next")
         self.load_button = QPushButton("Load MP3")  # Button to load an MP3 file
+        self.add_button = QPushButton("Add")
 
         # Connect buttons to functions
         self.play_button.clicked.connect(self.play_audio)
         self.pause_button.clicked.connect(self.pause_audio)
         self.stop_button.clicked.connect(self.stop_audio)
         self.load_button.clicked.connect(self.load_mp3)
+        self.add_button.clicked.connect(self.add_song)
 
         # Horizontal layout for playlists and song table
         top_layout = QHBoxLayout()
@@ -67,6 +69,7 @@ class MusicPlayer(QMainWindow):
         button_layout.addWidget(self.stop_button)
         button_layout.addWidget(self.next_button)
         button_layout.addWidget(self.load_button)
+        button_layout.addWidget(self.add_button)
 
         # Main vertical layout
         main_layout = QVBoxLayout(central_widget)
@@ -93,7 +96,7 @@ class MusicPlayer(QMainWindow):
                     padding: 10px;
                     font-size: 14px;
                     border-radius: 10px;  /* Makes the button round */
-                    min-width: 60px;      /* Ensures button size */
+                    min-width: 60px;     /* Ensures button size */
                     min-height: 40px;
                 }
                 QPushButton:hover {
@@ -135,6 +138,9 @@ class MusicPlayer(QMainWindow):
         # Stop the currently playing audio
         self.media_player.stop()
         print("Audio stopped.")
+
+    def add_song(self):
+        return
 
 
 

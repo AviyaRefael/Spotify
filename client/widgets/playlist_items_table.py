@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem
+from PyQt6.QtWidgets import QTableWidget, QTableWidgetItem
 
 
 class PlaylistItemsTable(QTableWidget):
