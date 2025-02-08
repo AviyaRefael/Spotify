@@ -1,7 +1,6 @@
 import json
 import socket
 
-from PyQt5.QtWidgets import QMainWindow
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QMessageBox
 )
@@ -112,19 +111,19 @@ class SpotifyLogin(QWidget):
 
         try:
             # Convert the JSON object to a string and send it to the server
-            self.client.send((json.dumps(login_request)+"END_OF_MSG").encode())
+            self.client.send(json.dumps(login_request).encode())
         except Exception as e:
             QMessageBox.critical(self, "Connection Error", f"Failed to send data to server: {e}")
 
         response = self.client.recv(1024).decode()
-        response = response.replace("END_OF_MSG", "")
         print("Response from server", response)
         response_json = json.loads(response)
 
         if response_json['status'] == 'success':
             print(response_json['message'])
-            window_new = MusicPlayer(mail, "John")
-            window_new.show()
+            self.window_new = MusicPlayer(mail, "John")
+            self.window_new.show()
+            self.close()
 
 
         elif response_json['status'] == 'error':
@@ -150,8 +149,8 @@ if __name__ == "__main__":
     window.show()
     # window_new = SpotifyLogin()
     # window_new.show()
-    sys.exit(app.exec())
-    # app.exec()
+    #sys.exit(app.exec())
+    app.exec()
 
 
 

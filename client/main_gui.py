@@ -1,6 +1,5 @@
 import socket
 
-from PyQt5.QtMultimedia import QMediaContent
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QHBoxLayout,
     QPushButton, QWidget, QFileDialog
@@ -36,9 +35,6 @@ class MusicPlayer(QMainWindow):
 
         # Playlist list
         self.playlist_list = PlaylistsList(self.song_table,self.client,self.mail)
-        self.playlist_list.itemClicked.connect(
-            lambda item: self.playlist_list.on_playlist_click(item, self.playlist_list.row(item)))
-
 
         # Control buttons
         self.prev_button = QPushButton("Previous")
@@ -103,6 +99,7 @@ class MusicPlayer(QMainWindow):
                     background-color: #444444;
                 }
             """)
+        print("Main windows loaded")
 
 
     def update_media(self, row, column):
@@ -153,4 +150,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MusicPlayer("mail", "John")
     window.show()
-    sys.exit(app.exec_())
+    app.exec()
