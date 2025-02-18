@@ -6,7 +6,7 @@ import os
 from mysql.connector import Error
 
 # Configuration
-from db_functions import add_user, connect_to_server, get_playlist
+from db_functions import add_user, connect_to_server, get_playlist, get_playlist_songs_id
 
 SERVER_HOST = '127.0.0.1'
 SERVER_PORT = 12345
@@ -93,18 +93,25 @@ def handle_client(client_socket, address):
                 response = {}
 
                 if request['type'] == 'register':
+                    # add user to db
                     response = register_user(request['mail'], request['name'], request['password'])
                 elif request['type'] == 'login':
+                    # check in db if user exists
                     response = login_user(request['mail'], request['password'])
                 elif request['type'] == 'upload':
+                    # 1. add song file to server
                     file_name = request['file_name']
                     file_data = base64.b64decode(request['file_data'])
+                    # 2. add song data to db
                     response = save_file(file_name, file_data)
                 elif request['type'] == 'get_song':
+                    # get one song data from server
                     response = get_file(request['file_name'])
                 elif request['type'] == 'playlists':
+                    # get from DB all playlists of specific user (by mail address as identifier)
                     response = get_playlist(connection,request["mail"])
                 elif request['type'] == 'get_playlist_songs_id':
+                    # get from DB all songs info. of specific playlist
                     response = get_playlist_songs_id(connection,request['playlist_id'])
 
                 client_socket.sendall((json.dumps(response) + "END_OF_MSG").encode('utf-8'))

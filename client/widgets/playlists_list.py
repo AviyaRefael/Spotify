@@ -28,7 +28,7 @@ class PlaylistsList(QListWidget):
         except Exception as e:
             print(f"Failed to send data to server: {e}")
 
-        response = client.recv(1024).decode()
+        response = client.recv(4096).decode()
         response = response.replace("END_OF_MSG", "")
         print("Response from server", response)
         response_json = json.loads(response)
@@ -63,12 +63,17 @@ class PlaylistsList(QListWidget):
     def on_playlist_click(self, item, rowindex):
         playlist_name = item.text()
         playlist_id = 0
-        for key,value in self.playlists:
+        for key, value in self.playlists.items():
             if value==playlist_name:
                 playlist_id = key
                 break
-        # playlist_row = item.row(item)
-        print(f"Clicked playlist: {playlist_name}")
+
+        # Clear previous songs before adding new ones
+        self.song_table.setRowCount(0)
+        playlist_songs = self.get_playlist_songs_id(playlist_id)
+
+        for song in playlist_songs:
+            self.song_table.add_song(song[1],song[4],song[3],song[2])
 
     def get_playlist_songs(self,playlist):
         return
@@ -99,3 +104,4 @@ class PlaylistsList(QListWidget):
             QMessageBox.critical(self, "Login Failed", response_json['message'])
 
 
+        return response_json["message"]

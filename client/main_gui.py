@@ -35,6 +35,10 @@ class MusicPlayer(QMainWindow):
 
 
         # Playlist list
+        # 3 parameters:
+        # a. the song table (right side). each time you will click on playlist song table will be updated
+        # b. client to send requests to server (get songs of clicked playlist)
+        # c. user mail to retrieve the user data
         self.playlist_list = PlaylistsList(self.song_table,self.client,self.mail)
         self.playlist_list.itemClicked.connect(
             lambda item: self.playlist_list.on_playlist_click(item, self.playlist_list.row(item)))

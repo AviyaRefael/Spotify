@@ -89,9 +89,24 @@ def get_playlist_songs_id(connection,playlist_id):
     try:
         # ה-cursor מתפקד כ"מתווך" בין קוד ה-Python לבין מסד הנתונים
         cursor = connection.cursor()
-        query = f"""SELECT songs.id, songs.name
-                FROM songs
-                INNER JOIN playlist_songs ON playlist_songs.song_id = songs.id WHERE playlist_id={playlist_id};"""
+        # query = f"""SELECT songs.id, songs.name
+        #         FROM songs
+        #         INNER JOIN playlist_songs ON playlist_songs.song_id = songs.id WHERE playlist_id={playlist_id};"""
+
+        query = f"""
+        SELECT 
+            songs.id, 
+            songs.name, 
+            songs.length, 
+            categories.name AS category_name, 
+            artists.name AS artist_name
+        FROM songs
+        INNER JOIN playlist_songs ON playlist_songs.song_id = songs.id
+        LEFT JOIN categories ON songs.category_code = categories.id
+        LEFT JOIN artists ON songs.artist_id = artists.id
+        WHERE playlist_songs.playlist_id = {playlist_id};
+        """
+        # use ? for security (avoiding sql injection)
         cursor.execute(query)
         playlist_songs = cursor.fetchall()
         print(playlist_songs)
