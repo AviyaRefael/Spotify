@@ -59,13 +59,13 @@ def save_file(file_name, file_data):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
-def get_file(file_name):
+def get_file(song_id):
     """Retrieve a file."""
     try:
-        file_path = os.path.join(FILES_DIR, file_name)
+        file_path = os.path.join(FILES_DIR, song_id+".mp3")
         if os.path.exists(file_path):
             with open(file_path, "rb") as f:
-                return {"status": "success", "file_name": file_name, "file_data": base64.b64encode(f.read()).decode('utf-8')}
+                return {"status": "success", "file_name": song_id, "file_data": base64.b64encode(f.read()).decode('utf-8')}
         return {"status": "error", "message": "File not found."}
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -106,7 +106,7 @@ def handle_client(client_socket, address):
                     response = save_file(file_name, file_data)
                 elif request['type'] == 'get_song':
                     # get one song data from server
-                    response = get_file(request['file_name'])
+                    response = get_file(request['song_id'])
                 elif request['type'] == 'playlists':
                     # get from DB all playlists of specific user (by mail address as identifier)
                     response = get_playlist(connection,request["mail"])

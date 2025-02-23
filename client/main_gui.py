@@ -31,7 +31,7 @@ class MusicPlayer(QMainWindow):
         # Song list (table)
         self.song_table = PlaylistItemsTable()
         # Connect the cellClicked signal to a function
-        self.song_table.cellClicked.connect(self.update_media)
+        # self.song_table.cellClicked.connect(self.update_media)
 
 
         # Playlist list

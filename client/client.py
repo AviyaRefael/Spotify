@@ -88,10 +88,10 @@ if __name__ == "__main__":
     print("Login Response:", response)
     #
     # # Upload a song
-    # response = client.upload_song("example.mp3")
+    # response = client.upload_song("128.mp3")
     # print("Upload Response:", response)
     #
     # # Get a song
 
-    # response = client.get_song("example.mp3")
+    # response = client.get_song("128.mp3")
     # print("Get Song Response:", response)
