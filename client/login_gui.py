@@ -123,7 +123,9 @@ class SpotifyLogin(QWidget):
 
         if response_json['status'] == 'success':
             print(response_json['message'])
-            window_new = MusicPlayer(mail, "John")
+            self.client.close()  # Close the socket
+            self.close()  # Close the login window
+            window_new = MusicPlayer(mail, response_json['name'])
             window_new.show()
 
 
@@ -132,7 +134,7 @@ class SpotifyLogin(QWidget):
 
     def open_registration_window(self):
         # Open the registration window
-        self.registration_window = RegistrationWindow(self.connection)
+        self.registration_window = RegistrationWindow()
         self.registration_window.show()
 
 

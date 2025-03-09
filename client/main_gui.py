@@ -1,6 +1,6 @@
 import socket
 
-from PyQt5.QtMultimedia import QMediaContent
+import pygame
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QHBoxLayout,
     QPushButton, QWidget, QFileDialog
@@ -31,7 +31,7 @@ class MusicPlayer(QMainWindow):
         # Song list (table)
         self.song_table = PlaylistItemsTable()
         # Connect the cellClicked signal to a function
-        # self.song_table.cellClicked.connect(self.update_media)
+        self.song_table.cellClicked.connect(self.update_media)
 
 
         # Playlist list
@@ -110,28 +110,34 @@ class MusicPlayer(QMainWindow):
 
 
     def update_media(self, row, column):
-        # Get the file path from the first column of the selected row
-        file_path = self.song_table.item(row, 0).text() + ".mp3"
-        # Column 0 is the "Title"
-
-        # Update the media player
-        self.media_player.setMedia(QMediaContent(QUrl.fromLocalFile("songs/"+file_path)))
+        file_path = self.playlist_list.on_song_click(row)
+        file_path = "file.wav"
+        # # Get the file path from the first column of the selected row
+        # file_path = self.song_table.item(row, 0).text() + ".mp3"
+        # # Column 0 is the "Title"
+        #
+        # # Update the media player
+        self.media_player.setSource(QUrl.fromLocalFile(file_path))
         print(f"Media updated to: {file_path}")
         self.play_audio()
     def load_mp3(self):
         # Open file dialog to select MP3 file
         file_path, _ = QFileDialog.getOpenFileName(self, "Open MP3 File", "", "Audio Files (*.mp3)")
         if file_path:
-            self.media_player.setMedia(QMediaContent(QUrl.fromLocalFile(file_path)))
+            self.media_player.setSource(QUrl.fromLocalFile(file_path))
+
             print(f"Loaded file: {file_path}")
 
     def play_audio(self):
-        # Play the loaded MP3 file
-        if self.media_player.media() is None:
-            print("No audio file loaded.")
-        else:
-            self.media_player.play()
-            print("Playing audio.")
+        # # Play the loaded MP3 file
+        # if not self.media_player.hasAudio():
+        #     print("No audio file loaded.")
+        # else:
+        self.media_player.play()
+        print("Playing audio.")
+        # pygame.mixer.init()
+        # pygame.mixer.music.load("temp_song.mp3")
+        # pygame.mixer.music.play()
 
     def pause_audio(self):
         # Pause the currently playing audio

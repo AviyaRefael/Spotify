@@ -6,7 +6,7 @@ import os
 from mysql.connector import Error
 
 # Configuration
-from db_functions import add_user, connect_to_server, get_playlist, get_playlist_songs_id
+from db_functions import add_user, connect_to_server, get_playlist, get_playlist_songs_id, check_user_exists
 
 SERVER_HOST = '127.0.0.1'
 SERVER_PORT = 12345
@@ -29,7 +29,7 @@ def register_user(mail, name, password):
     except Error as e:
         return {"status": "error", "message": str(e)}
 
-def login_user(mail, password):
+def login_user(name, password):
     """Authenticate user."""
     ###################################################
     ###################################################
@@ -37,12 +37,9 @@ def login_user(mail, password):
       # REPLACE THIS CODE BY DB_FUNCTION CHECK USER
 
     try:
-        cursor = connection.cursor()
-        cursor.execute("SELECT * FROM users WHERE mail=%s AND password=%s", (mail, password))
-        resp = cursor.fetchone()
-        print(resp)
+        resp, name = check_user_exists(connection, name, password)
         if resp:
-            return {"status": "success", "message": "Login successful."}
+            return {"status": "success", "message": "Login successful.", "name":name}
         else:
             return {"status": "error", "message": "Invalid credentials."}
     except Error as e:

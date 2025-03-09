@@ -55,19 +55,24 @@ def add_user(connection, username, password, email=None):
             return False, e
 
 # 4. Check if user already exists
-def check_user_exists(connection, username, password):
+def check_user_exists(connection, mail, password):
     """
-    Check if a user exists in the database with the given username and password.
+    Check if a user exists in the database and return their name if found.
     """
     try:
         cursor = connection.cursor()
-        query = "SELECT COUNT(*) FROM users WHERE mail = %s AND password = %s"
-        cursor.execute(query, (username, password))
+        query = "SELECT name FROM users WHERE mail = %s AND password = %s"
+        cursor.execute(query, (mail, password))
         result = cursor.fetchone()
-        return result[0] > 0
-    except Error as e:
+
+        if result:  # If a user is found, return True and the name
+            return True, result[0]
+        else:
+            return False, None  # No user found
+
+    except Exception as e:
         print(f"Error: {e}")
-        return False
+        return False, None  # Return failure in case of an error
 
 
 def get_playlist(connection,email):
