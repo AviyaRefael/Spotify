@@ -13,10 +13,11 @@ from widgets.playlists_list import PlaylistsList
 
 
 class MusicPlayer(QMainWindow):
-    def __init__(self,mail,name):
+    def __init__(self,client,mail,name):
         super().__init__()
-        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.client.connect(("localhost", 12345))
+        self.client = client
+        # socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # self.client.connect(("localhost", 12345))
         self.mail = mail
         self.setWindowTitle(name)
         self.setGeometry(100, 100, 800, 600)
@@ -29,9 +30,11 @@ class MusicPlayer(QMainWindow):
         self.media_player = QMediaPlayer()
 
         # Song list (table)
-        self.song_table = PlaylistItemsTable()
+        self.song_table = PlaylistItemsTable(self.client,self.media_player)
+        self.song_table.cellClicked.connect(self.song_selected)
+
         # Connect the cellClicked signal to a function
-        self.song_table.cellClicked.connect(self.update_media)
+        # self.song_table.cellClicked.connect(self.update_media)
 
 
         # Playlist list
@@ -108,6 +111,9 @@ class MusicPlayer(QMainWindow):
                 }
             """)
 
+    def song_selected(self, row, column):
+        song_id = self.song_table.item(row, 4).text()  # Get the song ID
+        self.song_table.play(song_id)
 
     def update_media(self, row, column):
         file_path = self.playlist_list.on_song_click(row)
@@ -117,9 +123,9 @@ class MusicPlayer(QMainWindow):
         # # Column 0 is the "Title"
         #
         # # Update the media player
-        self.media_player.setSource(QUrl.fromLocalFile(file_path))
+        # self.media_player.setSource(QUrl.fromLocalFile(file_path))
         print(f"Media updated to: {file_path}")
-        self.play_audio()
+        # self.play_audio()
     def load_mp3(self):
         # Open file dialog to select MP3 file
         file_path, _ = QFileDialog.getOpenFileName(self, "Open MP3 File", "", "Audio Files (*.mp3)")
@@ -130,10 +136,10 @@ class MusicPlayer(QMainWindow):
 
     def play_audio(self):
         # # Play the loaded MP3 file
-        # if not self.media_player.hasAudio():
-        #     print("No audio file loaded.")
-        # else:
-        self.media_player.play()
+        if not self.media_player.hasAudio():
+            print("No audio file loaded.")
+        else:
+            self.media_player.play()
         print("Playing audio.")
         # pygame.mixer.init()
         # pygame.mixer.music.load("temp_song.mp3")

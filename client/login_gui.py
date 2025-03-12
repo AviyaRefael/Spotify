@@ -1,7 +1,6 @@
 import json
 import socket
 
-from PyQt5.QtWidgets import QMainWindow
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QMessageBox
 )
@@ -123,9 +122,9 @@ class SpotifyLogin(QWidget):
 
         if response_json['status'] == 'success':
             print(response_json['message'])
-            self.client.close()  # Close the socket
-            self.close()  # Close the login window
-            window_new = MusicPlayer(mail, response_json['name'])
+            # self.client.close()  # Close the socket
+            # self.close()  # Close the login window
+            window_new = MusicPlayer(self.client,mail, response_json['name'])
             window_new.show()
 
 
