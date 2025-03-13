@@ -5,8 +5,8 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtCore import QUrl
 
-from client.widgets.playlist_items_table import PlaylistItemsTable
-from client.widgets.playlists_list import PlaylistsList
+from client.playlist_items_table import PlaylistItemsTable
+from client.playlists_list import PlaylistsList
 
 
 class MusicPlayer(QMainWindow):

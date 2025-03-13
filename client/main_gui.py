@@ -1,23 +1,18 @@
-import socket
-
 import pygame
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QHBoxLayout,
     QPushButton, QWidget, QFileDialog
 )
-from PyQt6.QtMultimedia import QMediaPlayer
-from PyQt6.QtCore import QUrl
+from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 
-from widgets.playlist_items_table import PlaylistItemsTable
-from widgets.playlists_list import PlaylistsList
+from client.playlist_items_table import PlaylistItemsTable
+from client.playlists_list import PlaylistsList
 
 
 class MusicPlayer(QMainWindow):
     def __init__(self,client,mail,name):
         super().__init__()
         self.client = client
-        # socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # self.client.connect(("localhost", 12345))
         self.mail = mail
         self.setWindowTitle(name)
         self.setGeometry(100, 100, 800, 600)
@@ -28,14 +23,15 @@ class MusicPlayer(QMainWindow):
 
         # Media player
         self.media_player = QMediaPlayer()
+        self.audio_output = QAudioOutput()
+        self.media_player.setAudioOutput(self.audio_output)
 
         # Song list (table)
         self.song_table = PlaylistItemsTable(self.client,self.media_player)
         self.song_table.cellClicked.connect(self.song_selected)
 
-        # Connect the cellClicked signal to a function
-        # self.song_table.cellClicked.connect(self.update_media)
 
+        pygame.mixer.init()
 
         # Playlist list
         # 3 parameters:
@@ -53,14 +49,12 @@ class MusicPlayer(QMainWindow):
         self.pause_button = QPushButton("Pause")
         self.stop_button = QPushButton("Stop")
         self.next_button = QPushButton("Next")
-        self.load_button = QPushButton("Load MP3")  # Button to load an MP3 file
         self.add_button = QPushButton("Add")
 
         # Connect buttons to functions
         self.play_button.clicked.connect(self.play_audio)
         self.pause_button.clicked.connect(self.pause_audio)
         self.stop_button.clicked.connect(self.stop_audio)
-        self.load_button.clicked.connect(self.load_mp3)
         self.add_button.clicked.connect(self.add_song)
 
         # Horizontal layout for playlists and song table
@@ -75,7 +69,6 @@ class MusicPlayer(QMainWindow):
         button_layout.addWidget(self.pause_button)
         button_layout.addWidget(self.stop_button)
         button_layout.addWidget(self.next_button)
-        button_layout.addWidget(self.load_button)
         button_layout.addWidget(self.add_button)
 
         # Main vertical layout
@@ -112,48 +105,29 @@ class MusicPlayer(QMainWindow):
             """)
 
     def song_selected(self, row, column):
+        self.stop_audio()
+        pygame.mixer.music.unload()
+        print("unload")
         song_id = self.song_table.item(row, 4).text()  # Get the song ID
-        self.song_table.play(song_id)
+        self.song_table.get_song_data(song_id)
 
-    def update_media(self, row, column):
-        file_path = self.playlist_list.on_song_click(row)
-        file_path = "file.wav"
-        # # Get the file path from the first column of the selected row
-        # file_path = self.song_table.item(row, 0).text() + ".mp3"
-        # # Column 0 is the "Title"
-        #
-        # # Update the media player
-        # self.media_player.setSource(QUrl.fromLocalFile(file_path))
-        print(f"Media updated to: {file_path}")
-        # self.play_audio()
-    def load_mp3(self):
-        # Open file dialog to select MP3 file
-        file_path, _ = QFileDialog.getOpenFileName(self, "Open MP3 File", "", "Audio Files (*.mp3)")
-        if file_path:
-            self.media_player.setSource(QUrl.fromLocalFile(file_path))
 
-            print(f"Loaded file: {file_path}")
 
     def play_audio(self):
+        # todo: playing after pause play from beginning
         # # Play the loaded MP3 file
-        if not self.media_player.hasAudio():
-            print("No audio file loaded.")
-        else:
-            self.media_player.play()
-        print("Playing audio.")
-        # pygame.mixer.init()
-        # pygame.mixer.music.load("temp_song.mp3")
-        # pygame.mixer.music.play()
+        pygame.mixer.music.load("temp_song.mp3")
+        pygame.mixer.music.play()
 
     def pause_audio(self):
         # Pause the currently playing audio
-        self.media_player.pause()
         print("Audio paused.")
+        pygame.mixer.music.pause()
 
     def stop_audio(self):
         # Stop the currently playing audio
-        self.media_player.stop()
         print("Audio stopped.")
+        pygame.mixer.music.stop()
 
     def add_song(self):
         return

@@ -2,6 +2,7 @@ import base64
 import json
 
 import pygame
+from pydub import AudioSegment
 from PyQt6.QtCore import QUrl
 from PyQt6.QtWidgets import QTableWidget, QTableWidgetItem, QMessageBox
 
@@ -28,7 +29,7 @@ class PlaylistItemsTable(QTableWidget):
         self.setItem(row_position, 4, QTableWidgetItem(str(id)) ) # Id
 
 
-    def play(self, song_id):
+    def get_song_data(self, song_id):
         """
         Request song from server and play it using QMediaPlayer.
         """
@@ -61,10 +62,6 @@ class PlaylistItemsTable(QTableWidget):
             with open(temp_song_path, "wb") as song_file:
                 song_file.write(song_data)
 
-            # Play with QMediaPlayer
-            # todo: check while player doesnt play music
-            self.media_player.setSource(QUrl.fromLocalFile(temp_song_path))
-            self.media_player.play()
 
         elif response_json['status'] == 'error':
             print(f"Error: {response_json['message']}")

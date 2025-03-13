@@ -17,7 +17,6 @@ os.makedirs(FILES_DIR, exist_ok=True)
 
 connection = None
 
-# Helper Functions
 def register_user(mail, name, password):
     """Register a new user."""
     try:
@@ -31,10 +30,6 @@ def register_user(mail, name, password):
 
 def login_user(name, password):
     """Authenticate user."""
-    ###################################################
-    ###################################################
-
-      # REPLACE THIS CODE BY DB_FUNCTION CHECK USER
 
     try:
         resp, name = check_user_exists(connection, name, password)
@@ -44,8 +39,7 @@ def login_user(name, password):
             return {"status": "error", "message": "Invalid credentials."}
     except Error as e:
         return {"status": "error", "message": str(e)}
-    ###################################################
-    ###################################################
+
 def save_file(file_name, file_data):
     """Save uploaded file."""
     try:
