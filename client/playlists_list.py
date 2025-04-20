@@ -41,6 +41,8 @@ class PlaylistsList(QListWidget):
         elif response_json['status'] == 'error':
             QMessageBox.critical(self, "Loading Playlists Failed", response_json['message'])
 
+        # Clear previous items
+        self.clear()
         # add and display playlists name to playlists list
         self.playlists = response_json['message']
         for playlist_name in self.playlists.values():
@@ -49,21 +51,23 @@ class PlaylistsList(QListWidget):
 
     def on_playlist_click(self, item, rowindex):
         playlist_name = item.text()
-        playlist_id = 0
+        self.selected_playlist_id = 0
         for key, value in self.playlists.items():
             if value==playlist_name:
-                playlist_id = key
+                self.selected_playlist_id = key
                 break
 
         # Clear previous songs before adding new ones
         self.song_table.setRowCount(0)
-        playlist_songs = self.get_playlist_songs_id(playlist_id)
+        playlist_songs = self.get_playlist_songs_id(self.selected_playlist_id)
         self.songs_id=[]
         for song in playlist_songs:
             self.song_table.display_songs(song[1],song[4],song[3],song[2], song[0])
             # add song id to list of songs id
             self.songs_id.append(song[0])
 
+    def get_selected_playlist_id(self):
+        return self.selected_playlist_id
 
     def get_playlist_songs_id(self,playlist_id):
         playlists_request = {
@@ -76,7 +80,7 @@ class PlaylistsList(QListWidget):
         except Exception as e:
             print(f"Failed to send data to server: {e}")
 
-        response = self.client.recv(1024).decode()
+        response = self.client.recv(4096).decode()
         response = response.replace("END_OF_MSG", "")
         print("Response from server", response)
         response_json = json.loads(response)
@@ -88,13 +92,3 @@ class PlaylistsList(QListWidget):
 
 
         return response_json["message"]
-
-
-    # def on_song_click(self, row):
-    #     """
-    #     This function is called when a song is clicked.
-    #     It gets the songs row, the get the id of the song, then requests the song file from the server,
-    #     and then plays the song.
-    #     """
-    #     song_id = self.songs_id[row]
-    #     self.song_table.play(song_id)

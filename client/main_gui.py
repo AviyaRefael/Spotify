@@ -1,10 +1,13 @@
+import json
+
 import pygame
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QHBoxLayout,
-    QPushButton, QWidget, QFileDialog
+    QPushButton, QWidget, QFileDialog, QMessageBox, QInputDialog
 )
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 
+from client.add_song import PlaylistCreator
 from client.playlist_items_table import PlaylistItemsTable
 from client.playlists_list import PlaylistsList
 
@@ -30,51 +33,48 @@ class MusicPlayer(QMainWindow):
         self.song_table = PlaylistItemsTable(self.client,self.media_player)
         self.song_table.cellClicked.connect(self.song_selected)
 
-
         pygame.mixer.init()
 
         # Playlist list
-        # 3 parameters:
-        # a. the song table (right side). each time you will click on playlist song table will be updated
-        # b. client to send requests to server (get songs of clicked playlist)
-        # c. user mail to retrieve the user data
         self.playlist_list = PlaylistsList(self.song_table,self.client,self.mail)
         self.playlist_list.itemClicked.connect(
             lambda item: self.playlist_list.on_playlist_click(item, self.playlist_list.row(item)))
 
-
         # Control buttons
-        self.prev_button = QPushButton("Previous")
+        # self.prev_button = QPushButton("Previous")
         self.play_button = QPushButton("Play")
-        self.pause_button = QPushButton("Pause")
+        # self.pause_button = QPushButton("Pause")
         self.stop_button = QPushButton("Stop")
-        self.next_button = QPushButton("Next")
+        # self.next_button = QPushButton("Next")
         self.add_button = QPushButton("Add")
+        self.create_playlist_button = QPushButton("New Playlist")  # New playlist button
 
         # Connect buttons to functions
         self.play_button.clicked.connect(self.play_audio)
-        self.pause_button.clicked.connect(self.pause_audio)
+        # self.pause_button.clicked.connect(self.pause_audio)
         self.stop_button.clicked.connect(self.stop_audio)
         self.add_button.clicked.connect(self.add_song)
+        self.create_playlist_button.clicked.connect(self.create_playlist)  # Connect to function
 
         # Horizontal layout for playlists and song table
         top_layout = QHBoxLayout()
-        top_layout.addWidget(self.playlist_list, 1)  # Add playlist list
-        top_layout.addWidget(self.song_table, 3)    # Add song table
+        top_layout.addWidget(self.playlist_list, 1)
+        top_layout.addWidget(self.song_table, 3)
 
         # Horizontal layout for control buttons
         button_layout = QHBoxLayout()
-        button_layout.addWidget(self.prev_button)
+        # button_layout.addWidget(self.prev_button)
         button_layout.addWidget(self.play_button)
-        button_layout.addWidget(self.pause_button)
+        # button_layout.addWidget(self.pause_button)
         button_layout.addWidget(self.stop_button)
-        button_layout.addWidget(self.next_button)
+        # button_layout.addWidget(self.next_button)
         button_layout.addWidget(self.add_button)
+        button_layout.addWidget(self.create_playlist_button)
 
         # Main vertical layout
         main_layout = QVBoxLayout(central_widget)
-        main_layout.addLayout(top_layout)    # Add top layout (playlists + song table)
-        main_layout.addLayout(button_layout)  # Add button layout
+        main_layout.addLayout(top_layout)
+        main_layout.addLayout(button_layout)
 
         self.setStyleSheet("""
                 QMainWindow {
@@ -95,8 +95,8 @@ class MusicPlayer(QMainWindow):
                     border: none;
                     padding: 10px;
                     font-size: 14px;
-                    border-radius: 10px;  /* Makes the button round */
-                    min-width: 60px;     /* Ensures button size */
+                    border-radius: 10px;
+                    min-width: 60px;
                     min-height: 40px;
                 }
                 QPushButton:hover {
@@ -108,39 +108,101 @@ class MusicPlayer(QMainWindow):
         self.stop_audio()
         pygame.mixer.music.unload()
         print("unload")
-        song_id = self.song_table.item(row, 4).text()  # Get the song ID
+        song_id = self.song_table.item(row, 4).text()
         self.song_table.get_song_data(song_id)
 
-
-
     def play_audio(self):
-        # todo: playing after pause play from beginning
-        # # Play the loaded MP3 file
         pygame.mixer.music.load("temp_song.mp3")
         pygame.mixer.music.play()
 
-    def pause_audio(self):
-        # Pause the currently playing audio
-        print("Audio paused.")
-        pygame.mixer.music.pause()
-
     def stop_audio(self):
-        # Stop the currently playing audio
         print("Audio stopped.")
         pygame.mixer.music.stop()
 
+    def receive_full_response(self):
+        data = b""
+        while True:
+            chunk = self.client.recv(4096)
+            if b"END_OF_MSG" in chunk:
+                data += chunk.split(b"END_OF_MSG")[0]
+                break
+            data += chunk
+        return data.decode('utf-8')
+
     def add_song(self):
+        selected_playlist_id = self.playlist_list.get_selected_playlist_id()
+
+        not_in_playlist_songs_request ={
+            "type": "get_not_in_playlist_songs_id",
+            "playlist_id": selected_playlist_id,
+        }
+
+        try:
+            self.client.send((json.dumps(not_in_playlist_songs_request) + "END_OF_MSG").encode())
+        except Exception as e:
+            QMessageBox.critical(self, "Connection Error", f"Failed to send data to server: {e}")
+
+        response = self.receive_full_response()
+        print("Response from server", response)
+        response_json = json.loads(response)
+
+        if response_json['status'] == 'success':
+            song_id = None
+            songs_data = response_json["message"]
+            window = PlaylistCreator(songs_data)
+            if window.exec():
+                song_id = window.selected_song_id
+                print("Selected song ID:", song_id)
+        elif response_json['status'] == 'error':
+            QMessageBox.critical(self, "Login Failed", response_json['message'])
+            return
+
+        add_song_to_selected_playlist = {
+            "type": "add_to_playlist",
+            "playlist_id": selected_playlist_id,
+            "song_id": song_id
+        }
+
+        try:
+            self.client.send((json.dumps(add_song_to_selected_playlist) + "END_OF_MSG").encode())
+        except Exception as e:
+            QMessageBox.critical(self, "Connection Error", f"Failed to send data to server: {e}")
+
+        response = self.client.recv(1024).decode()
+        response = response.replace("END_OF_MSG", "")
+        print("Response from server", response)
+        response_json = json.loads(response)
+
+        if response_json['status'] == 'success':
+            print(response_json['message'])
+        elif response_json['status'] == 'error':
+            QMessageBox.critical(self, "Login Failed", response_json['message'])
+
         return
 
+    def create_playlist(self):
+        playlist_name, ok = QInputDialog.getText(self, "New Playlist", "Enter playlist name:")
+        if ok and playlist_name.strip():
+            create_playlist_request = {
+                "type": "new_playlist",
+                "playlist_name": playlist_name.strip(),
+                "mail": self.mail
+            }
 
+            try:
+                self.client.send((json.dumps(create_playlist_request) + "END_OF_MSG").encode())
+            except Exception as e:
+                QMessageBox.critical(self, "Connection Error", f"Failed to send request: {e}")
+                return
 
+            response = self.client.recv(1024).decode().replace("END_OF_MSG", "")
+            print("Response from server:", response)
+            response_json = json.loads(response)
 
+            if response_json["status"] == "success":
+                QMessageBox.information(self, "Playlist Created", response_json["message"])
+                self.playlist_list.load_playlists(self.client)  # Refresh playlists
+            else:
+                QMessageBox.critical(self, "Error", response_json["message"])
 
-
-# Run the application
-if __name__ == "__main__":
-    import sys
-    app = QApplication(sys.argv)
-    window = MusicPlayer("mail", "John")
-    window.show()
-    sys.exit(app.exec_())
+        return

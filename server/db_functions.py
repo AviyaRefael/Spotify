@@ -120,6 +120,97 @@ def get_playlist_songs_id(connection,playlist_id):
         print(f"Error: {e}")
 
 
+def get_songs_not_in_playlist(connection, playlist_id):
+    try:
+        cursor = connection.cursor()
+
+        query = f"""
+        SELECT 
+            songs.id, 
+            songs.name, 
+            songs.length, 
+            categories.name AS category_name, 
+            artists.name AS artist_name
+        FROM songs
+        LEFT JOIN categories ON songs.category_code = categories.id
+        LEFT JOIN artists ON songs.artist_id = artists.id
+        WHERE songs.id NOT IN (
+            SELECT song_id FROM playlist_songs WHERE playlist_id = {playlist_id}
+        );
+        """
+
+        cursor.execute(query)
+        available_songs = cursor.fetchall()
+        return {"status": "success", "message": available_songs}
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+
+def add_song_to_playlist(connection, playlist_id, song_id):
+    try:
+        cursor = connection.cursor()
+
+        query = f"""INSERT INTO playlist_songs (playlist_id, song_id) VALUES ({playlist_id}, {song_id});"""
+        cursor.execute(query)
+        connection.commit()
+
+        return {"status": "success", "message": "Song added to playlist successfully."}
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return {"status": "error", "message": str(e)}
+
+# def add_new_playlist(connection, playlist_name, mail):
+#         try:
+#             cursor = connection.cursor()
+#
+#
+#             # Check if playlist already exists for this user
+#             # check_query = f"""SELECT id FROM playlists WHERE name = {playlist_name} AND user_mail = {mail}"""
+#             # cursor.execute(check_query)
+#             # Use placeholders to prevent SQL injection and handle special characters
+#             check_query = "SELECT id FROM playlists WHERE name = %s AND user_mail = %s"
+#             cursor.execute(check_query, (playlist_name, mail))
+#
+#             if cursor.fetchone():
+#                 return {"status": "error", "message": "Playlist already exists."}
+#
+#             # Insert new playlist
+#             insert_query = f"INSERT INTO playlists (name, user_mail) VALUES ({playlist_name},{mail})"
+#             cursor.execute(insert_query)
+#             connection.commit()
+#
+#             return {"status": "success", "message": f"Playlist '{playlist_name}' created successfully."}
+#
+#         except Error as e:
+#             print(f"Database Error: {e}")
+#             return {"status": "error", "message": "Failed to create playlist due to database error."}
+
+from mysql.connector import Error
+
+def add_new_playlist(connection, playlist_name, user_mail):
+    try:
+        cursor = connection.cursor()
+
+        # Check if playlist already exists for this user
+        check_query = "SELECT id FROM playlists WHERE name = %s AND user_mail = %s"
+        cursor.execute(check_query, (playlist_name, user_mail))
+        if cursor.fetchone():
+            return {"status": "error", "message": "Playlist already exists."}
+
+        # Insert new playlist
+        insert_query = "INSERT INTO playlists (name, user_mail) VALUES (%s, %s)"
+        cursor.execute(insert_query, (playlist_name, user_mail))
+        connection.commit()
+
+        return {"status": "success", "message": f"Playlist '{playlist_name}' created successfully."}
+
+    except Error as e:
+        print(f"Database Error: {e}")
+        return {"status": "error", "message": str(e)}
 
 # Main Function to Test
 if __name__ == "__main__":
@@ -141,7 +232,7 @@ if __name__ == "__main__":
             print(f"Error while creating database: {e}")
             connection.close()
             exit()
-#
+
     # # 2. Create users table
     # create_users_table(connection)
     #

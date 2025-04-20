@@ -6,7 +6,8 @@ import os
 from mysql.connector import Error
 
 # Configuration
-from db_functions import add_user, connect_to_server, get_playlist, get_playlist_songs_id, check_user_exists
+from db_functions import add_user, connect_to_server, get_playlist, get_playlist_songs_id, check_user_exists, \
+    get_songs_not_in_playlist, add_song_to_playlist, add_new_playlist
 
 SERVER_HOST = '127.0.0.1'
 SERVER_PORT = 12345
@@ -61,6 +62,7 @@ def get_file(song_id):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+
 # Client Handler
 def handle_client(client_socket, address):
     print(f"New connection from {address}")
@@ -101,9 +103,22 @@ def handle_client(client_socket, address):
                 elif request['type'] == 'playlists':
                     # get from DB all playlists of specific user (by mail address as identifier)
                     response = get_playlist(connection,request["mail"])
+
                 elif request['type'] == 'get_playlist_songs_id':
                     # get from DB all songs info. of specific playlist
                     response = get_playlist_songs_id(connection,request['playlist_id'])
+
+                elif request['type'] == 'get_not_in_playlist_songs_id':
+                    # get from DB all songs that are NOT in playlist
+                    response = get_songs_not_in_playlist(connection,request['playlist_id'])
+
+                elif request['type'] == 'add_to_playlist':
+                    # add song to playlist
+                    response = add_song_to_playlist(connection, request['playlist_id'], request['song_id'])
+
+                elif request['type'] == 'new_playlist':
+                    # create new playlist
+                    response = add_new_playlist(connection, request['playlist_name'], request['mail'])
 
                 client_socket.sendall((json.dumps(response) + "END_OF_MSG").encode('utf-8'))
 
