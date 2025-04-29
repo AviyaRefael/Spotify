@@ -8,6 +8,7 @@ from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt
 import sys
 
+from client.upload import UploadWindow
 from register_gui import RegistrationWindow
 from main_gui import MusicPlayer
 
@@ -122,11 +123,12 @@ class SpotifyLogin(QWidget):
 
         if response_json['status'] == 'success':
             print(response_json['message'])
-            # self.client.close()  # Close the socket
-            # self.close()  # Close the login window
-            window_new = MusicPlayer(self.client,mail, response_json['name'])
-            window_new.show()
-
+            if mail != "admin":
+                self.window_new = MusicPlayer(self.client, mail, response_json['name'])
+                self.window_new.show()
+            else:
+                self.window_new = UploadWindow(self.client)
+                self.window_new.show()
 
         elif response_json['status'] == 'error':
             QMessageBox.critical(self, "Login Failed", response_json['message'])

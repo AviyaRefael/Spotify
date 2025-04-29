@@ -1,3 +1,6 @@
+import base64
+import os
+
 import mysql.connector
 from mysql.connector import Error
 
@@ -191,6 +194,36 @@ def add_song_to_playlist(connection, playlist_id, song_id):
 
 from mysql.connector import Error
 
+def get_all_artists(connection):
+    """
+    Retrieve all artists from the artists table.
+    Returns: dict of {id: name}
+    """
+    try:
+        cursor = connection.cursor()
+        query = "SELECT id, name FROM artists"
+        cursor.execute(query)
+        results = cursor.fetchall()
+        return {"status": "success", "message": {artist_id: name for artist_id, name in results}}
+    except Exception as e:
+        print(f"Database Error: {e}")
+        return {"status": "error", "message": str(e)}
+
+def get_all_categories(connection):
+    """
+    Retrieve all cat. from the table.
+    Returns: dict of {id: name}
+    """
+    try:
+        cursor = connection.cursor()
+        query = "SELECT id, name FROM categories"
+        cursor.execute(query)
+        results = cursor.fetchall()
+        return {"status": "success", "message": {category_id: name for category_id, name in results}}
+    except Exception as e:
+        print(f"Database Error: {e}")
+        return {"status": "error", "message": str(e)}
+
 def add_new_playlist(connection, playlist_name, user_mail):
     try:
         cursor = connection.cursor()
@@ -212,45 +245,82 @@ def add_new_playlist(connection, playlist_name, user_mail):
         print(f"Database Error: {e}")
         return {"status": "error", "message": str(e)}
 
-# Main Function to Test
-if __name__ == "__main__":
-    # Update these with your MySQL server credentials
-    host = "localhost"
-    user = "root"
-    password = "root"
-    database = "music"
 
-    # 1. Connect to the MySQL server and create database if not exists
-    connection = connect_to_server(host, user, password)
-    if connection:
-        try:
-            cursor = connection.cursor()
-            cursor.execute(f"CREATE DATABASE IF NOT EXISTS {database}")
-            print(f"Database '{database}' is ready")
-            connection.database = database
-        except Error as e:
-            print(f"Error while creating database: {e}")
-            connection.close()
-            exit()
+def save_to_db(connection, song_name, artist_name, category_name, length, file_data_base64):
+    try:
+        cursor = connection.cursor()
 
-    # # 2. Create users table
-    # create_users_table(connection)
-    #
-    # # 3. Add users
-    username = "aviya"
-    password = "securepassword"
-    mail = "aviya2@gmail.com"
+        # קבלת מזהי אמן וקטגוריה לפי השם
+        cursor.execute("SELECT id FROM artists WHERE name = %s", (artist_name,))
+        artist_row = cursor.fetchone()
+        if not artist_row:
+            return {"status": "error", "message": "Artist not found"}
+        artist_id = artist_row[0]
 
-    # if not check_user_exists(connection, email):
-    #     add_user(connection, username, password, email)
-    # else:
-    #     print("User already exists")
+        cursor.execute("SELECT id FROM categories WHERE name = %s", (category_name,))
+        category_row = cursor.fetchone()
+        if not category_row:
+            return {"status": "error", "message": "Category not found"}
+        category_id = category_row[0]
 
-    # # 4. Check if a user exists
-    # if check_user_exists(connection, "johndoe"):
-    #     print("User johndoe exists in the database")
-    # else:
-    #     print("User johndoe does not exist")
+        # שמירת קובץ mp3 בתיקיית files
+        file_path = os.path.join("files", f"{song_name}.mp3")
+        with open(file_path, "wb") as f:
+            f.write(base64.b64decode(file_data_base64))
 
-    # Close the connection
-    # connection.close()
+        # הכנסת השיר למסד הנתונים
+        insert_query = """
+        INSERT INTO songs (name, artist_id, category_code, length, hashed_name)
+        VALUES (%s, %s, %s, %s, %s)
+        """
+        cursor.execute(insert_query, (song_name, artist_id, category_id, length, "test"))
+        connection.commit()
+
+        return {"status": "success", "message": "Song uploaded and saved successfully"}
+
+    except Exception as e:
+        print(f"Database Error: {e}")
+        return {"status": "error", "message": str(e)}
+
+# # Main Function to Test
+# if __name__ == "__main__":
+#     # Update these with your MySQL server credentials
+#     host = "localhost"
+#     user = "root"
+#     password = "root"
+#     database = "music"
+#
+#     # 1. Connect to the MySQL server and create database if not exists
+#     connection = connect_to_server(host, user, password)
+#     if connection:
+#         try:
+#             cursor = connection.cursor()
+#             cursor.execute(f"CREATE DATABASE IF NOT EXISTS {database}")
+#             print(f"Database '{database}' is ready")
+#             connection.database = database
+#         except Error as e:
+#             print(f"Error while creating database: {e}")
+#             connection.close()
+#             exit()
+#
+#     # # 2. Create users table
+#     # create_users_table(connection)
+#     #
+#     # # 3. Add users
+#     username = "aviya"
+#     password = "securepassword"
+#     mail = "aviya2@gmail.com"
+#
+#     # if not check_user_exists(connection, email):
+#     #     add_user(connection, username, password, email)
+#     # else:
+#     #     print("User already exists")
+#
+#     # # 4. Check if a user exists
+#     # if check_user_exists(connection, "johndoe"):
+#     #     print("User johndoe exists in the database")
+#     # else:
+#     #     print("User johndoe does not exist")
+#
+#     # Close the connection
+#     # connection.close()

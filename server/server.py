@@ -7,7 +7,7 @@ from mysql.connector import Error
 
 # Configuration
 from db_functions import add_user, connect_to_server, get_playlist, get_playlist_songs_id, check_user_exists, \
-    get_songs_not_in_playlist, add_song_to_playlist, add_new_playlist
+    get_songs_not_in_playlist, add_song_to_playlist, add_new_playlist, get_all_artists, get_all_categories, save_to_db
 
 SERVER_HOST = '127.0.0.1'
 SERVER_PORT = 12345
@@ -119,6 +119,24 @@ def handle_client(client_socket, address):
                 elif request['type'] == 'new_playlist':
                     # create new playlist
                     response = add_new_playlist(connection, request['playlist_name'], request['mail'])
+
+                elif request['type'] == 'get_artists':
+                    # retrieve all artists from db
+                    response = get_all_artists(connection)
+
+                elif request['type'] == 'get_categories':
+                    # retrieve all artists from db
+                    response = get_all_categories(connection)
+
+                elif request['type'] == 'upload_song':
+                    song_name = request.get("song_name")
+                    artist_name = request.get("artist_name")
+                    category_name = request.get("category_name")
+                    length = request.get("length")
+                    file_data = request.get("file_data")
+
+                    response = save_to_db(connection, song_name, artist_name, category_name, length, file_data)
+                    client_socket.sendall((json.dumps(response) + "END_OF_MSG").encode('utf-8'))
 
                 client_socket.sendall((json.dumps(response) + "END_OF_MSG").encode('utf-8'))
 
